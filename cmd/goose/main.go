@@ -52,7 +52,7 @@ func main() {
 	switch driver {
 	case "redshift":
 		driver = "postgres"
-	case  "tidb":
+	case "tidb":
 		driver = "mysql"
 	}
 
@@ -90,7 +90,8 @@ Drivers:
     postgres
     mysql
     sqlite3
-    redshift
+	redshift
+	clickhouse
 
 Examples:
     goose sqlite3 ./foo.db status
@@ -102,7 +103,8 @@ Examples:
     goose postgres "user=postgres dbname=postgres sslmode=disable" status
     goose mysql "user:password@/dbname?parseTime=true" status
     goose redshift "postgres://user:password@qwerty.us-east-1.redshift.amazonaws.com:5439/db" status
-    goose tidb "user:password@/dbname?parseTime=true" status
+	goose tidb "user:password@/dbname?parseTime=true" status
+	goose clickhouse "tcp://user:password@127.0.0.1:9000/?database=clickhouse" status
 
 Options:
 `

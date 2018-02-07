@@ -3,6 +3,9 @@ package goose
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
+	_ "github.com/kshvakov/clickhouse"
 )
 
 // SQLDialect abstracts the details of specific SQL dialects
@@ -33,6 +36,8 @@ func SetDialect(d string) error {
 		dialect = &RedshiftDialect{}
 	case "tidb":
 		dialect = &TiDBDialect{}
+	case "clickhouse":
+		dialect = &ClickhouseDialect{}
 	default:
 		return fmt.Errorf("%q: unknown dialect", d)
 	}
@@ -182,6 +187,36 @@ func (m TiDBDialect) insertVersionSQL() string {
 
 func (m TiDBDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
 	rows, err := db.Query("SELECT version_id, is_applied from goose_db_version ORDER BY id DESC")
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, err
+}
+
+////////////////////////////
+// Clickhouse
+////////////////////////////
+
+// ClickhouseDialect struct.
+type ClickhouseDialect struct{}
+
+func (ch ClickhouseDialect) createVersionTableSQL() string {
+	return `CREATE TABLE goose_db_version (
+				version_id Int64,
+				is_applied UInt8 DEFAULT 0,
+				tstamp DateTime DEFAULT now(),
+				date Date DEFAULT toDate(tstamp)
+			) engine=MergeTree(date, (version_id, tstamp), 8192)`
+}
+
+func (ch ClickhouseDialect) insertVersionSQL() string {
+	time.Sleep(time.Second * 1)
+	return "INSERT INTO goose_db_version (version_id, is_applied) VALUES ($1, $2);"
+}
+
+func (ch ClickhouseDialect) dbVersionQuery(db *sql.DB) (*sql.Rows, error) {
+	rows, err := db.Query("SELECT version_id, is_applied from goose_db_version ORDER BY tstamp DESC")
 	if err != nil {
 		return nil, err
 	}
