@@ -7,12 +7,12 @@ import (
 )
 
 // Reset rolls back all migrations
-func Reset(db *sql.DB, dir string) error {
+func Reset(db *sql.DB, dir string, tableName string) error {
 	migrations, err := CollectMigrations(dir, minVersion, maxVersion)
 	if err != nil {
 		return err
 	}
-	statuses, err := dbMigrationsStatus(db)
+	statuses, err := dbMigrationsStatus(db, tableName)
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func Reset(db *sql.DB, dir string) error {
 		if !statuses[migration.Version] {
 			continue
 		}
-		if err = migration.Down(db); err != nil {
+		if err = migration.Down(db, tableName); err != nil {
 			return err
 		}
 	}
@@ -30,10 +30,10 @@ func Reset(db *sql.DB, dir string) error {
 	return nil
 }
 
-func dbMigrationsStatus(db *sql.DB) (map[int64]bool, error) {
-	rows, err := GetDialect().dbVersionQuery(db)
+func dbMigrationsStatus(db *sql.DB, tableName string) (map[int64]bool, error) {
+	rows, err := GetDialect().dbVersionQuery(db, tableName)
 	if err != nil {
-		return map[int64]bool{}, createVersionTable(db)
+		return map[int64]bool{}, createVersionTable(db, tableName)
 	}
 	defer rows.Close()
 

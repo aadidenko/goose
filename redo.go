@@ -5,8 +5,8 @@ import (
 )
 
 // Redo rolls back the most recently applied migration, then runs it again.
-func Redo(db *sql.DB, dir string) error {
-	currentVersion, err := GetDBVersion(db)
+func Redo(db *sql.DB, dir string, tableName string) error {
+	currentVersion, err := GetDBVersion(db, tableName)
 	if err != nil {
 		return err
 	}
@@ -21,11 +21,11 @@ func Redo(db *sql.DB, dir string) error {
 		return err
 	}
 
-	if err := current.Down(db); err != nil {
+	if err := current.Down(db, tableName); err != nil {
 		return err
 	}
 
-	if err := current.Up(db); err != nil {
+	if err := current.Up(db, tableName); err != nil {
 		return err
 	}
 

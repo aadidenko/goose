@@ -198,10 +198,10 @@ func versionFilter(v, current, target int64) bool {
 
 // EnsureDBVersion retrieves the current version for this DB.
 // Create and initialize the DB version table if it doesn't exist.
-func EnsureDBVersion(db *sql.DB) (int64, error) {
-	rows, err := GetDialect().dbVersionQuery(db)
+func EnsureDBVersion(db *sql.DB, tableName string) (int64, error) {
+	rows, err := GetDialect().dbVersionQuery(db, tableName)
 	if err != nil {
-		return 0, createVersionTable(db)
+		return 0, createVersionTable(db, tableName)
 	}
 	defer rows.Close()
 
@@ -244,7 +244,7 @@ func EnsureDBVersion(db *sql.DB) (int64, error) {
 
 // Create the goose_db_version table
 // and insert the initial 0 value into it
-func createVersionTable(db *sql.DB) error {
+func createVersionTable(db *sql.DB, tableName string) error {
 	txn, err := db.Begin()
 	if err != nil {
 		return err
@@ -252,14 +252,14 @@ func createVersionTable(db *sql.DB) error {
 
 	d := GetDialect()
 
-	if _, err := txn.Exec(d.createVersionTableSQL()); err != nil {
+	if _, err := txn.Exec(d.createVersionTableSQL(tableName)); err != nil {
 		txn.Rollback()
 		return err
 	}
 
 	version := 0
 	applied := true
-	if _, err := txn.Exec(d.insertVersionSQL(), version, applied); err != nil {
+	if _, err := txn.Exec(d.insertVersionSQL(tableName), version, applied); err != nil {
 		txn.Rollback()
 		return err
 	}
@@ -269,8 +269,8 @@ func createVersionTable(db *sql.DB) error {
 
 // GetDBVersion is a wrapper for EnsureDBVersion for callers that don't already
 // have their own DB instance
-func GetDBVersion(db *sql.DB) (int64, error) {
-	version, err := EnsureDBVersion(db)
+func GetDBVersion(db *sql.DB, tableName string) (int64, error) {
+	version, err := EnsureDBVersion(db, tableName)
 	if err != nil {
 		return -1, err
 	}

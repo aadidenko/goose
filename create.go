@@ -46,7 +46,7 @@ func CreateWithTemplate(db *sql.DB, dir string, migrationTemplate *template.Temp
 }
 
 // Create writes a new blank migration file.
-func Create(db *sql.DB, dir, name, migrationType string) error {
+func Create(db *sql.DB, dir, tableName, name, migrationType string) error {
 	return CreateWithTemplate(db, dir, nil, name, migrationType)
 }
 
